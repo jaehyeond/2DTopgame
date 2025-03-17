@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
+using UnityEngine.UI;
+using TMPro;
 
 /// <summary>
 /// 게임의 중앙 제어 시스템으로, 모든 매니저와 시스템을 관리하는 클래스
@@ -260,7 +262,47 @@ public class ModularApplicationController : LifetimeScope
     /// </summary>
     private void Start()
     {
+        // 게임 초기화
         Initialize();
+        
+        // 초기화 완료 후 MainMenu 씬으로 전환
+        StartCoroutine(LoadMainMenuAfterInitialization());
+    }
+
+    private IEnumerator LoadMainMenuAfterInitialization()
+    {
+        // 로딩 UI 요소 찾기
+        Slider progressBar = GameObject.Find("ProgressBar")?.GetComponent<Slider>();
+        TextMeshProUGUI loadingText = GameObject.Find("LoadingText")?.GetComponent<TextMeshProUGUI>();
+        
+        // 초기화 진행 상태 표시
+        float progress = 0f;
+        while (progress < 1f)
+        {
+            progress += Time.deltaTime * 0.5f; // 시뮬레이션된 로딩 진행
+            if (progressBar != null)
+                progressBar.value = progress;
+            
+            // 로딩 텍스트 업데이트
+            if (loadingText != null)
+            {
+                if (progress < 0.3f)
+                    loadingText.text = "게임 초기화 중...";
+                else if (progress < 0.6f)
+                    loadingText.text = "리소스 로드 중...";
+                else
+                    loadingText.text = "준비 완료!";
+            }
+            
+            yield return null;
+        }
+        
+        // 잠시 대기 후 메인 메뉴로 전환
+        yield return new WaitForSeconds(1f);
+        
+        // SceneManagerEx를 통해 MainMenu 씬으로 전환
+        var sceneManager = Container.Resolve<SceneManagerEx>();
+        sceneManager.LoadScene(Define.EScene.MainMenu, true);
     }
 
     /// <summary>
